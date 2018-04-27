@@ -277,21 +277,21 @@ subroutine convdiff(ux1,uy1,uz1,ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1,&
   enddo
 
   !FINAL SUM: DIFF TERMS + CONV TERMS
-  !ta1 = xnu*ta1 - tg1 + sumphi*anglex  !+x
-  !tb1 = xnu*tb1 - th1 - sumphi*angley  !+y
-  !tc1 = xnu*tc1 - ti1 !+- sumphi       !+z
+  ta1 = xnu*ta1 - tg1 + sumphi*anglex  !+x
+  tb1 = xnu*tb1 - th1 - sumphi*angley  !+y
+  tc1 = xnu*tc1 - ti1 !+- sumphi       !+z
 
-  !FINAL SUM: DIFF TERMS + CONV TERMS
+  if (ro.lt.1000.) then
   ta1 = xnu*ta1-tg1 + uz1/ro
   tb1 = xnu*tb1-th1 + sumphi
   tc1 = xnu*tc1-ti1 - (ux1-one)/ro ! Ug=1.0 vento geostrofico
+  endif
 
-
-  !if (itime.lt.irotation) then
-  !   if (nrank==0) print *,'Rotating turbulent channel!'
-  !   ta1 = ta1 - wrotation*uy1
-  !   tb1 = tb1 + wrotation*ux1
-  !endif
+  if (itime.lt.irotation) then
+     if (nrank==0) print *,'Rotating turbulent channel!'
+     ta1 = ta1 - wrotation*uy1
+     tb1 = tb1 + wrotation*ux1
+  endif
 
 #ifdef ELES
   ta1 = ta1 + sgsx1 
@@ -299,10 +299,10 @@ subroutine convdiff(ux1,uy1,uz1,ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1,&
   tc1 = tc1 + sgsz1 
 #endif
 
-  !if (itrip == 1) then
-  !   call tripping(tb1,td1)
-  !   if (nrank == 0) print *,'TRIPPING KTH STYLE!!'
-  !endif
+  if (itrip == 1) then
+     call tripping(tb1,td1)
+     if (nrank == 0) print *,'TRIPPING KTH STYLE!!'
+  endif
 
 end subroutine convdiff
 !************************************************************

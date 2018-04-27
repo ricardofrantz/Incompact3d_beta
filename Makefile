@@ -16,7 +16,7 @@
 # generate a Git version string
 GIT_VERSION := $(shell git describe --tag --long --always)
 
-FLOW_TYPE = ekman# TGV# Channel-flow# Cylinder
+FLOW_TYPE = walljet#ekman# TGV# Channel-flow# Cylinder
 OPTIONS = -DVISU -DVISUEXTRA -DSTRETCHING -DPOST -DVERSION=\"$(GIT_VERSION)\" #all above                 #TGV
 
 LCL = local# local,lad,sdu,archer
@@ -27,7 +27,7 @@ FFT = mkl# mkl,generic,fftw3
 #######CMP settings###########
 ifeq ($(CMP),intel)
 FC = mpiifort
-FFLAGS = -fpp -O3 -xSSE4.1 -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
+FFLAGS = -fpp -O3 -xHost -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
 ##debuggin test: -check all -check bounds -chintel eck uninit -gen-interfaces -warn interfaces
 else ifeq ($(CMP),gcc)
 FC = mpif90

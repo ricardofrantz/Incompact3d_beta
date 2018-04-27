@@ -260,79 +260,79 @@ subroutine init (ux1,uy1,uz1,ep1,phi1,gx1,gy1,gz1,phis1,hx1,hy1,hz1,phiss1)
 
   endif
 
-!  if (iin==2) then !import fields as initial condition
-!    if (nrank==0) print *,'Reading external files"'
+  !  if (iin==2) then !import fields as initial condition
+  !    if (nrank==0) print *,'Reading external files"'
 
 
-!    call system_clock(count=code)
-!    if (iin.eq.2) code=0
-!    call random_seed(size = ii)
-!    call random_seed(put = code+63946*nrank*(/ (i - 1, i = 1, ii) /))
+  !    call system_clock(count=code)
+  !    if (iin.eq.2) code=0
+  !    call random_seed(size = ii)
+  !    call random_seed(put = code+63946*nrank*(/ (i - 1, i = 1, ii) /))
 
-!    call random_number(ux1)
-!    call random_number(uy1)
-!    call random_number(uz1)
+  !    call random_number(ux1)
+  !    call random_number(uy1)
+  !    call random_number(uz1)
 
-!    !modulation of the random noise + initial velocity profile
-!    do k=1,xsize(3)
-!      do j=1,xsize(2)
-!        if (istret.eq.0) y=real(j+xstart(2)-1-1,mytype)*dy- 0.8
-!        if (istret.ne.0) y=yp(j+xstart(2)-1)- 0.8
-!        um=exp(-zptwo*y*y)
-!        do i=1,xsize(1)
-!          ux1(i,j,k)=noise*um(j)*(two*ux1(i,j,k)-one)
-!          uy1(i,j,k)=noise*um(j)*(two*uy1(i,j,k)-one)
-!          uz1(i,j,k)=noise*um(j)*(two*uz1(i,j,k)-one)
-!        enddo
-!      enddo
-!    enddo
+  !    !modulation of the random noise + initial velocity profile
+  !    do k=1,xsize(3)
+  !      do j=1,xsize(2)
+  !        if (istret.eq.0) y=real(j+xstart(2)-1-1,mytype)*dy- 0.8
+  !        if (istret.ne.0) y=yp(j+xstart(2)-1)- 0.8
+  !        um=exp(-zptwo*y*y)
+  !        do i=1,xsize(1)
+  !          ux1(i,j,k)=noise*um(j)*(two*ux1(i,j,k)-one)
+  !          uy1(i,j,k)=noise*um(j)*(two*uy1(i,j,k)-one)
+  !          uz1(i,j,k)=noise*um(j)*(two*uz1(i,j,k)-one)
+  !        enddo
+  !      enddo
+  !    enddo
 
-!    if (ncly1==2) then !ensure no noise near the wall !!! done in the hard way
-!      if (xstart(2)==1) then
-!        do k=1,xsize(3)
-!          do i=1,xsize(1)
-!            ux1(i,1,k)=zero
-!            uy1(i,1,k)=zero
-!            uz1(i,1,k)=zero
-!          enddo
-!        enddo
-!      endif
-!    endif
+  !    if (ncly1==2) then !ensure no noise near the wall !!! done in the hard way
+  !      if (xstart(2)==1) then
+  !        do k=1,xsize(3)
+  !          do i=1,xsize(1)
+  !            ux1(i,1,k)=zero
+  !            uy1(i,1,k)=zero
+  !            uz1(i,1,k)=zero
+  !          enddo
+  !        enddo
+  !      endif
+  !    endif
 
-!    call transpose_x_to_y(ux1,ux2)
-!    call transpose_x_to_y(uz1,uz2)
+  !    call transpose_x_to_y(ux1,ux2)
+  !    call transpose_x_to_y(uz1,uz2)
 
-!    open(10,file='ansorge.txt',status='unknown',form='formatted')
-!    do i=1,ysize(2)
-!      read(10,*) uansorge(i) , vansorge(i)
-!      !read(10,*) ux2(:,i,:), uz2(:,i,:)
-!    enddo
+  !    open(10,file='ansorge.txt',status='unknown',form='formatted')
+  !    do i=1,ysize(2)
+  !      read(10,*) uansorge(i) , vansorge(i)
+  !      !read(10,*) ux2(:,i,:), uz2(:,i,:)
+  !    enddo
 
-!    do i=1,ysize(2)
-!      ux2(:,i,:) = ux2(:,i,:) + uansorge(i)
-!      uz2(:,i,:) = uz2(:,i,:) - vansorge(i)
-!    enddo
+  !    do i=1,ysize(2)
+  !      ux2(:,i,:) = ux2(:,i,:) + uansorge(i)
+  !      uz2(:,i,:) = uz2(:,i,:) - vansorge(i)
+  !    enddo
 
-!    call transpose_y_to_x(ux2,ux1)
-!    call transpose_y_to_x(uz2,uz1)
+  !    call transpose_y_to_x(ux2,ux1)
+  !    call transpose_y_to_x(uz2,uz1)
 
-!    !call decomp_2d_read_one(1,ux1,'ux1_init.dat')
-!    !call decomp_2d_read_one(1,uy1,'uy1_init.dat')
-!    !call decomp_2d_read_one(1,uz1,'uz1_init.dat')
+  !    !call decomp_2d_read_one(1,ux1,'ux1_init.dat')
+  !    !call decomp_2d_read_one(1,uy1,'uy1_init.dat')
+  !    !call decomp_2d_read_one(1,uz1,'uz1_init.dat')
 
-!  endif
+  !  endif
 
-    if (ncly1==2) then !ensure no noise near the wall !!! done in the hard way
-      if (xstart(2)==1) then
-        do k=1,xsize(3)
-          do i=1,xsize(1)
-            ux1(i,1,k)=zero
-            uy1(i,1,k)=zero
-            uz1(i,1,k)=zero
-          enddo
+  if (ncly1==2) then !ensure no noise near the wall !!! done in the hard way
+    if (xstart(2)==1) then
+      do k=1,xsize(3)
+        do i=1,xsize(1)
+          ux1(i,1,k)=zero
+          uy1(i,1,k)=zero
+          uz1(i,1,k)=zero
         enddo
-      endif
+      enddo
     endif
+  endif
 
   !INIT FOR G AND U=MEAN FLOW + NOISE
   do k=1,xsize(3)
@@ -391,21 +391,21 @@ subroutine boundary_conditions (ux1,uy1,uz1,phi1,ep1)
   !  enddo
 
   if (nclyS1.eq.2) then
-   do is=1,nphi
-     if (xstart(2)==1) then
-       do k=1,xsize(3)
-         do i=1,xsize(1)
-           !if (nrank==0) write(*,*) 'antes',phi1(i,1,k,is)
-           phi1(i,1,k,is)=zero
-           !if (nrank==0) write(*,*) 'depois',phi1(i,1,k,is)
-         enddo
-       enddo
-     endif
-   enddo
+    do is=1,nphi
+      if (xstart(2)==1) then
+        do k=1,xsize(3)
+          do i=1,xsize(1)
+            !if (nrank==0) write(*,*) 'antes',phi1(i,1,k,is)
+            phi1(i,1,k,is)=zero
+            !if (nrank==0) write(*,*) 'depois',phi1(i,1,k,is)
+          enddo
+        enddo
+      endif
+    enddo
   endif
 
   if (nclySn.eq.2) then
-     do is=1,nphi
+    do is=1,nphi
       if (xend(2)==ny) then
         do k=1,xsize(3)
           do i=1,xsize(1)
@@ -471,17 +471,17 @@ contains
     !X PENCILS !Utilizar para integral volumétrica dentro do domínio físico (método de Simpson)
     dxdydz=dx*dy*dz
     do k=xstart(3),xend(3)
-       do j=xstart(2),xend(2)
-          do i=xstart(1),xend(1)
-             vol1(i,j,k)=dxdydz
-             if (i .eq. 1 .or. i .eq. nx) vol1(i,j,k) = vol1(i,j,k) * five/twelve
-             if (j .eq. 1 .or. j .eq. ny) vol1(i,j,k) = vol1(i,j,k) * five/twelve
-             if (k .eq. 1 .or. k .eq. nz) vol1(i,j,k) = vol1(i,j,k) * five/twelve
-             if (i .eq. 2 .or. i .eq. nx-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
-             if (j .eq. 2 .or. j .eq. ny-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
-             if (k .eq. 2 .or. k .eq. nz-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
-          end do
-       end do
+      do j=xstart(2),xend(2)
+        do i=xstart(1),xend(1)
+          vol1(i,j,k)=dxdydz
+          if (i .eq. 1 .or. i .eq. nx) vol1(i,j,k) = vol1(i,j,k) * five/twelve
+          if (j .eq. 1 .or. j .eq. ny) vol1(i,j,k) = vol1(i,j,k) * five/twelve
+          if (k .eq. 1 .or. k .eq. nz) vol1(i,j,k) = vol1(i,j,k) * five/twelve
+          if (i .eq. 2 .or. i .eq. nx-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
+          if (j .eq. 2 .or. j .eq. ny-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
+          if (k .eq. 2 .or. k .eq. nz-1) vol1(i,j,k) = vol1(i,j,k) * thirteen/twelve
+        end do
+      end do
     end do
 
     !Y PENCILS
@@ -489,11 +489,11 @@ contains
     dxdz=dx*dz
     area2=zero
     do k=ystart(3),yend(3)
-       do i=ystart(1),yend(1)
-          area2(i,k)=dxdz
-          if (i .eq. 1 .or. i .eq. nx) area2(i,k) = area2(i,k)/two
-          if (k .eq. 1 .or. k .eq. nz)  area2(i,k) = area2(i,k)/two
-       end do
+      do i=ystart(1),yend(1)
+        area2(i,k)=dxdz
+        if (i .eq. 1 .or. i .eq. nx) area2(i,k) = area2(i,k)/two
+        if (k .eq. 1 .or. k .eq. nz)  area2(i,k) = area2(i,k)/two
+      end do
     end do
 
     !    nprobes  = 0
@@ -590,22 +590,22 @@ contains
 
     if (mod(itime,iprocessing).eq.0) then
 
-    mp=zero
+      mp=zero
 
-    call budget(ux1,uy1,uz1,phi1,vol1)
-    call suspended(phi1,vol1,mp)
+      call budget(ux1,uy1,uz1,phi1,vol1)
+      call suspended(phi1,vol1,mp)
 
-    if (nrank .eq. 0) then
-       FS = 1+nphi !Number of columns
-       write(fileformat, '( "(",I4,"(E14.6),A)" )' ) FS
-       FS = FS*14+1  !Line width
-       open(67,file='./out/statistics',status='unknown',form='formatted',&
-            access='direct',recl=FS)
-       write(67,fileformat,rec=itime/iprocessing+1) t,& !1
-            mp,&                                    !nphi
-            NL                                      !+1
-       close(67)
-    end if
+      if (nrank .eq. 0) then
+        FS = 1+nphi !Number of columns
+        write(fileformat, '( "(",I4,"(E14.6),A)" )' ) FS
+        FS = FS*14+1  !Line width
+        open(67,file='./out/statistics',status='unknown',form='formatted',&
+        access='direct',recl=FS)
+        write(67,fileformat,rec=itime/iprocessing+1) t,& !1
+        mp,&                                    !nphi
+        NL                                      !+1
+        close(67)
+      end if
 
     endif
 
@@ -1004,46 +1004,46 @@ contains
   !############################################################################
 
 
-subroutine dissipation (ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,diss1)
+  subroutine dissipation (ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,diss1)
 
-  USE param
-  USE variables
-  USE decomp_2d
+    USE param
+    USE variables
+    USE decomp_2d
 
-  implicit none
+    implicit none
 
-  real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,diss1
-  real(mytype),dimension(3,3,xsize(1),xsize(2),xsize(3)) :: A
-  integer :: k,j,i,m,l
+    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,diss1
+    real(mytype),dimension(3,3,xsize(1),xsize(2),xsize(3)) :: A
+    integer :: k,j,i,m,l
 
-  !INSTANTANEOUS DISSIPATION RATE
-  diss1=0._mytype
-  A(:,:,:,:,:)=0._mytype
-  A(1,1,:,:,:)=ta1(:,:,:)!du/dx=ta1
-  A(2,1,:,:,:)=tb1(:,:,:)!dv/dx=tb1
-  A(3,1,:,:,:)=tc1(:,:,:)!dw/dx=tc1
-  A(1,2,:,:,:)=td1(:,:,:)!du/dy=td1
-  A(2,2,:,:,:)=te1(:,:,:)!dv/dy=te1
-  A(3,2,:,:,:)=tf1(:,:,:)!dw/dy=tf1
-  A(1,3,:,:,:)=tg1(:,:,:)!du/dz=tg1
-  A(2,3,:,:,:)=th1(:,:,:)!dv/dz=th1
-  A(3,3,:,:,:)=ti1(:,:,:)!dw/dz=ti1
-  do k=1,xsize(3)
-    do j=1,xsize(2)
-      do i=1,xsize(1)
-        do m=1,3
-          do l=1,3
-            diss1(i,j,k)=diss1(i,j,k)+two*xnu*half*half*(A(l,m,i,j,k)+A(m,l,i,j,k))**2
+    !INSTANTANEOUS DISSIPATION RATE
+    diss1=0._mytype
+    A(:,:,:,:,:)=0._mytype
+    A(1,1,:,:,:)=ta1(:,:,:)!du/dx=ta1
+    A(2,1,:,:,:)=tb1(:,:,:)!dv/dx=tb1
+    A(3,1,:,:,:)=tc1(:,:,:)!dw/dx=tc1
+    A(1,2,:,:,:)=td1(:,:,:)!du/dy=td1
+    A(2,2,:,:,:)=te1(:,:,:)!dv/dy=te1
+    A(3,2,:,:,:)=tf1(:,:,:)!dw/dy=tf1
+    A(1,3,:,:,:)=tg1(:,:,:)!du/dz=tg1
+    A(2,3,:,:,:)=th1(:,:,:)!dv/dz=th1
+    A(3,3,:,:,:)=ti1(:,:,:)!dw/dz=ti1
+    do k=1,xsize(3)
+      do j=1,xsize(2)
+        do i=1,xsize(1)
+          do m=1,3
+            do l=1,3
+              diss1(i,j,k)=diss1(i,j,k)+two*xnu*half*half*(A(l,m,i,j,k)+A(m,l,i,j,k))**2
+            enddo
           enddo
         enddo
       enddo
     enddo
-  enddo
 
-  return
+    return
 
-end subroutine dissipation
-!############################################################################
+  end subroutine dissipation
+  !############################################################################
   subroutine suspended(phi1,vol1,mp1)
 
     USE decomp_2d_io
@@ -1062,8 +1062,8 @@ end subroutine dissipation
     mp=zero; mp1=zero
 
     do is=1, nphi
-       temp1 = phi1(:,:,:,is)*vol1(:,:,:)
-       mp(is)= sum(temp1)
+      temp1 = phi1(:,:,:,is)*vol1(:,:,:)
+      mp(is)= sum(temp1)
     end do
 
     call MPI_REDUCE(mp,mp1,nphi,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
@@ -1092,7 +1092,7 @@ end subroutine dissipation
     real(mytype),dimension(3,3,xsize(1),xsize(2),xsize(3)) :: A
 
     real(mytype),dimension(xszV(1),xszV(2),xszV(3)) :: uvisu
-  
+
     real(8) :: ek,ek1,dek,dek1,ep,ep1,dep,dep1,xvol
     integer :: ijk,i,j,k,l,m,is,code
     character(len=30) :: filename
@@ -1140,62 +1140,62 @@ end subroutine dissipation
     A(3,3,:,:,:)=ti1(:,:,:)
 
     do k=1,xsize(3)
-       do j=1,xsize(2)
-          do i=1,xsize(1)
-             do m=1,3
-                do l=1,3
-                   diss1(i,j,k)=diss1(i,j,k)+two*xnu*half*half*(A(l,m,i,j,k)+A(m,l,i,j,k))**two
-                enddo
-             enddo
+      do j=1,xsize(2)
+        do i=1,xsize(1)
+          do m=1,3
+            do l=1,3
+              diss1(i,j,k)=diss1(i,j,k)+two*xnu*half*half*(A(l,m,i,j,k)+A(m,l,i,j,k))**two
+            enddo
           enddo
-       enddo
+        enddo
+      enddo
     enddo
 
     do ijk=1,xsize(1)*xsize(2)*xsize(3)
-       xvol=real(vol1(ijk,1,1),8)
-       ek = ek + half * xvol * (ux1(ijk,1,1)**two+uy1(ijk,1,1)**two+uz1(ijk,1,1)**two)
-       dek = dek + xvol * diss1(ijk,1,1)
+      xvol=real(vol1(ijk,1,1),8)
+      ek = ek + half * xvol * (ux1(ijk,1,1)**two+uy1(ijk,1,1)**two+uz1(ijk,1,1)**two)
+      dek = dek + xvol * diss1(ijk,1,1)
     enddo
 
     call transpose_x_to_y(vol1,vol2)
 
     if (ivirt==2) then
-       ilag=0
+      ilag=0
     endif
     do is=1, nphi
-       if (ri(is) .eq. 0.) cycle
-       call derxxS (dphixx1,phi1(:,:,:,is),di1,sx,sfxpS,ssxpS,swxpS,xsize(1),xsize(2),xsize(3),1)
+      if (ri(is) .eq. 0.) cycle
+      call derxxS (dphixx1,phi1(:,:,:,is),di1,sx,sfxpS,ssxpS,swxpS,xsize(1),xsize(2),xsize(3),1)
 
-       call transpose_x_to_y(dphixx1,dphixx2)
+      call transpose_x_to_y(dphixx1,dphixx2)
 
-       call transpose_x_to_y(phi1(:,:,:,is),phi2)
+      call transpose_x_to_y(phi1(:,:,:,is),phi2)
 
-       call deryS (dphiy2,phi2,di2,sy,ffyS,fsyS,fwyS,ppy,ysize(1),ysize(2),ysize(3),1)
+      call deryS (dphiy2,phi2,di2,sy,ffyS,fsyS,fwyS,ppy,ysize(1),ysize(2),ysize(3),1)
 
-       call deryyS (dphiyy2,phi2,di2,sy,sfypS,ssypS,swypS,ysize(1),ysize(2),ysize(3),1)
+      call deryyS (dphiyy2,phi2,di2,sy,sfypS,ssypS,swypS,ysize(1),ysize(2),ysize(3),1)
 
-       call transpose_y_to_z(phi2,phi3)
+      call transpose_y_to_z(phi2,phi3)
 
-       call derzzS (dphizz3,phi3,di3,sz,sfzpS,sszpS,swzpS,zsize(1),zsize(2),zsize(3),1)
+      call derzzS (dphizz3,phi3,di3,sz,sfzpS,sszpS,swzpS,zsize(1),zsize(2),zsize(3),1)
 
-       call transpose_z_to_y(dphizz3,dphizz2)
+      call transpose_z_to_y(dphizz3,dphizz2)
 
-       do ijk=1,ysize(1)*ysize(2)*ysize(3)
-          ddphi2(ijk,1,1)=dphixx2(ijk,1,1)+dphiyy2(ijk,1,1)+dphizz2(ijk,1,1)
-       enddo
+      do ijk=1,ysize(1)*ysize(2)*ysize(3)
+        ddphi2(ijk,1,1)=dphixx2(ijk,1,1)+dphiyy2(ijk,1,1)+dphizz2(ijk,1,1)
+      enddo
 
-       do k=1,ysize(3)
-          do j=1,ysize(2)
-             do i=1,ysize(1)
-                xvol=real(vol2(i,j,k),8)
-                ep=ep + xvol * (phi2(i,j,k)*(j-1)*dy)
-                dep=dep - xvol * (ddphi2(i,j,k)*xnu/nsc(is)+uset(is)*dphiy2(i,j,k))*(j-1)*dy
-             enddo
+      do k=1,ysize(3)
+        do j=1,ysize(2)
+          do i=1,ysize(1)
+            xvol=real(vol2(i,j,k),8)
+            ep=ep + xvol * (phi2(i,j,k)*(j-1)*dy)
+            dep=dep - xvol * (ddphi2(i,j,k)*xnu/nsc(is)+uset(is)*dphiy2(i,j,k))*(j-1)*dy
           enddo
-       enddo
+        enddo
+      enddo
     enddo
     if (ivirt==2) then
-       ilag=1
+      ilag=1
     endif
 
     call MPI_REDUCE(ek,ek1,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,code)
@@ -1204,10 +1204,10 @@ end subroutine dissipation
     call MPI_REDUCE(dep,dep1,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,code)
 
     if (nrank .eq. 0) then
-       open(67,file='./out/budget',status='unknown',form='formatted',&
-            access='direct',recl=71) !71=5*14+1
-       write(67,"(5E14.6,A)",rec=itime/iprocessing+1) t,ek1,dek1,ep1,dep1,NL
-       close(67)
+      open(67,file='./out/budget',status='unknown',form='formatted',&
+      access='direct',recl=71) !71=5*14+1
+      write(67,"(5E14.6,A)",rec=itime/iprocessing+1) t,ek1,dek1,ep1,dep1,NL
+      close(67)
     end if
 
   end subroutine budget

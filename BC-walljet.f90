@@ -1,6 +1,6 @@
 module flow_type
   use decomp_2d, only : mytype
-  integer :: initstats1,initstats2,iprocessing
+  integer :: initstats1,initstats2
 
 end module flow_type
 
@@ -17,7 +17,7 @@ subroutine ft_parameter(arg)
   integer :: is
   character :: a
 
-  open(10,file='BC-Wall_jet.prm',status='unknown',form='formatted')
+  open(10,file='BC-walljet.prm',status='unknown',form='formatted')
   read (10,*) a !
   read (10,*) a ! INCOMPACT 3D computational parameters
   read (10,*) a !
@@ -44,6 +44,8 @@ subroutine ft_parameter(arg)
     read (10,*) a
     read (10,*) ri(is)
     read (10,*) nsc(is)
+    read (10,*) uset(is)
+    read (10,*) cp(is)
   enddo
   read (10,*) noise1
   read (10,*) dt
@@ -82,6 +84,7 @@ subroutine ft_parameter(arg)
   read (10,*) isave
   read (10,*) imodulo
   read (10,*) iprocessing
+  read (10,*) itest
   read (10,*) initstats1
   read (10,*) initstats2
   read (10,*) a !
@@ -335,7 +338,7 @@ subroutine boundary_conditions (ux1,uy1,uz1,phi1,ep1)
 
           bxx1(j,k) = (0.55+0.45*tanh(10*(h-y)))*(tanh(10.*y))
 
-          phi1(1,j,k,is)=(half + half * tanh(10. * (h - y))) * cp(is)
+          phi1(1,j,k,is)=zero !(half + half * tanh(10. * (h - y))) * cp(is)
 
         enddo !z
       enddo !y
@@ -445,17 +448,29 @@ subroutine boundary_conditions (ux1,uy1,uz1,phi1,ep1)
   call MPI_ALLREDUCE(uxmax,uxmax1,1,real_type,MPI_MAX,MPI_COMM_WORLD,code)
   call MPI_ALLREDUCE(uxmin,uxmin1,1,real_type,MPI_MIN,MPI_COMM_WORLD,code)
 
-  !!SPONGE ZONE
-  !do k=1,xsize(3)
-  !   do j=1,xsize(2)
-  !      do i=1,xsize(1)
-  !         if (ux(i,j,k).lt.0.) ux(i,j,k)=ux(i,j,k)*0.5*(1.-tanh(real(i-1,mytype)*dx-xlx+3.0))
-  !      enddo
-  !   enddo
-  !enddo
-  !if (nrank==0) print *,'SPONGE FOR VELOCITY'
-  !!SPONGE ZONE
+  !SPONGE ZONE
+  do k=1,xsize(3)
+    do j=1,xsize(2)
+      do i=1,xsize(1)
+        if (ux1(i,j,k).lt.0.) ux1(i,j,k)=ux1(i,j,k)*0.5*(1.-tanh(real(i-1,mytype)*dx-xlx+3.0))
+      enddo
+    enddo
+  enddo
+  if (nrank==0) print *,'SPONGE FOR VELOCITY'
+  !SPONGE ZONE
 
+
+  if (nclyS1.eq.2) then
+    do is=1,nphi
+      if (xstart(2)==1) then
+        do k=1,xsize(3)
+          do i=1,xsize(1)
+            phi1(i,1,k,is)=cp(is)
+          enddo
+        enddo
+      endif
+    enddo
+  endif
 
   if (u1==0) cx=(0.5*(uxmax1+uxmin1))*gdt(itr)*udx
   if (u1==1) cx=uxmax1*gdt(itr)*udx
@@ -566,134 +581,324 @@ contains
 
   end subroutine init_post
   !############################################################################
-  subroutine postprocessing(ux1,uy1,uz1,phi1,ep1) !By Felipe Schuch
+  subroutine postprocessing(ux1,uy1,uz1,phi1,ep1,pre1,diss1) !By Felipe Schuch
 
     USE decomp_2d_io
 
-    real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1, ep1
+    real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1, ep1, pre1
     real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3),nphi) :: phi1
+    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: diss1
     !
-    real(mytype),dimension(ysize(1),ysize(2),ysize(3)) :: ux2, uy2, uz2
-    real(mytype),dimension(zsize(1),zsize(2),zsize(3)) :: ux3, uy3, uz3, temp3
-    real(mytype),dimension(zsize(1),zsize(2),zsize(3)) ::  uprime, vprime, wprime
+    real(mytype),dimension(zsize(1),zsize(2),zsize(3)) ::  uprime, vprime, wprime, dissprime, preprime
     !
-    real(mytype),dimension(zsize(1),zsize(2)) :: um, vm, wm
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u1sum,v1sum,w1sum,ta1 !first
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u2sum,v2sum,w2sum !second
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u3sum,v3sum,w3sum !third
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u4sum,v4sum,w4sum !fourth
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: uvsum,uwsum,vwsum !tensors
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: disssum,presum,tsum !diss, pressure and auxiliary variable
+
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u1psum,v1psum,w1psum !first
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u2psum,v2psum,w2psum !second
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u3psum,v3psum,w3psum !third
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: u4psum,v4psum,w4psum !fourth
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: uvpsum,uwpsum,vwpsum !tensors
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3)) :: dissspum,prepsum,tpsum !diss, pressure and auxiliary variable
     !
-    integer :: i,j,k
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3),nphi) :: psum,ppsum
+    real(mytype),dimension(xszS(1),xszS(2),xszS(3),nphi) :: upsum,vpsum,wpsum
+    !
+    integer :: i,j,k,is,tacum
     character(len=30) :: filename
 
-    if (itime.ge.initstats1) then
+    tacum = itime - initstats1
 
-      call transpose_x_to_y(ux1,ux2)
-      call transpose_x_to_y(uy1,uy2)
-      call transpose_x_to_y(uz1,uz2)
+    if (itime.ge.initstats1) then !start acumulating
 
-      call transpose_y_to_z(ux2,ux3)
-      call transpose_y_to_z(uy2,uy3)
-      call transpose_y_to_z(uz2,uz3)
+      !pressure
+      call fine_to_coarseS(1,pre1,tsum)
+      presum=presum+tsum
 
-      call mean_plane_z(ux3,zsize(1),zsize(2),zsize(3),um)
-      call mean_plane_z(uy3,zsize(1),zsize(2),zsize(3),vm)
-      call mean_plane_z(uz3,zsize(1),zsize(2),zsize(3),wm)
+      !u1=ux1
+      call fine_to_coarseS(1,ux1,tsum)
+      u1sum=u1sum+tsum
 
-      usum = usum + um
-      vsum = vsum + vm
-      wsum = wsum + wm
+      !u2=ux1*ux1
+      ta1=ux1*ux1
+      call fine_to_coarseS(1,ta1,tsum)
+      u2sum=u2sum+tsum
 
-      ntimes1 = ntimes1 + 1
+      !u3=ux1*ux1*ux1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+      ta1=ux1*ux1*ux1
+      call fine_to_coarseS(1,ta1,tsum)
+      u3sum=u3sum+tsum
 
+      !u4=ux1*ux1*ux1*ux1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+      ta1=ux1*ux1*ux1*ux1
+      call fine_to_coarseS(1,ta1,tsum)
+      u4sum=u4sum+tsum
+
+      !v1=uy1
+      call fine_to_coarseS(1,uy1,tsum)
+      v1sum=v1sum+tsum
+
+      !v2=uy1*uy1
+      ta1=uy1*uy1
+      call fine_to_coarseS(1,ta1,tsum)
+      v2sum=v2sum+tsum
+
+      !v3sum=uy1*uy1*uy1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+      ta1=uy1*uy1*uy1
+      call fine_to_coarseS(1,ta1,tsum)
+      v3sum=v3sum+tsum
+
+      !v4sum=uy1*uy1*uy1*uy1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+      ta1=uy1*uy1*uy1*uy1
+      call fine_to_coarseS(1,ta1,tsum)
+      v4sum=v4sum+tsum
+
+      !w1=uz1
+      call fine_to_coarseS(1,uz1,tsum)
+      w1sum=w1sum+tsum
+
+      !w2=uz1*uz1
+      ta1=uz1*uz1
+      call fine_to_coarseS(1,ta1,tsum)
+      w2sum=w2sum+tsum
+
+      !w3=uz1*uz1*uz1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+      ta1=uz1*uz1*uz1
+      call fine_to_coarseS(1,ta1,tsum)
+      w3sum=w3sum+tsum
+
+      !w4=uz1*uz1*uz1*uz1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+      ta1=uz1*uz1*uz1*uz1
+      call fine_to_coarseS(1,ta1,tsum)
+      w4sum=w4sum+tsum
+
+      !uvsum=ux1*uy1
+      ta1=ux1*uy1
+      call fine_to_coarseS(1,ta1,tsum)
+      uvsum=uvsum+tsum
+
+      !uwsum=ux1*uz1
+      ta1=ux1*uz1
+      call fine_to_coarseS(1,ta1,tsum)
+      uwsum=uwsum+tsum
+
+      !vwsum=uy1*uz1
+      ta1=uy1*uz1
+      call fine_to_coarseS(1,ta1,tsum)
+      vwsum=vwsum+tsum
+
+      if (iscalar==1) then
+        do is=1, nphi
+
+          !psum=phi1
+          call fine_to_coarseS(1,phi1(:,:,:,is),tsum)
+          psum(:,:,:,is)=psum(:,:,:,is)+tsum
+
+          !ppsum=phi1*phi1
+          ta1=phi1(:,:,:,is)*phi1(:,:,:,is)
+          call fine_to_coarseS(1,ta1,tsum)
+          ppsum(:,:,:,is)=ppsum(:,:,:,is)+tsum
+
+          !upsum=phi1*ux1
+          ta1=phi1(:,:,:,is)*ux1
+          call fine_to_coarseS(1,ta1,tsum)
+          upsum(:,:,:,is)=upsum(:,:,:,is)+tsum
+
+          !vpsum=phi1*uy1
+          ta1=phi1(:,:,:,is)*uy1
+          call fine_to_coarseS(1,ta1,tsum)
+          vpsum(:,:,:,is)=vpsum(:,:,:,is)+tsum
+
+          !wpsum=phi1*uz1
+          ta1=phi1(:,:,:,is)*uz1
+          call fine_to_coarseS(1,ta1,tsum)
+          wpsum(:,:,:,is)=wpsum(:,:,:,is)+tsum
+
+        enddo
+      endif
+      
+      endif
       if (itime.ge.initstats2) then
 
-        uprime = zero
-        vprime = zero
-        wprime = zero
+        !AVERAGE OF THE FLUCTUATIONS ON TIME
 
-        do k=1,zsize(3)
-          do j=1,zsize(2)
-            do i=1,zsize(1)
-              uprime(i,j,k) = ux3(i,j,k) - usum(i,j)/real(ntimes1,mytype)
-              vprime(i,j,k) = uy3(i,j,k) - vsum(i,j)/real(ntimes1,mytype)
-              wprime(i,j,k) = uz3(i,j,k) - wsum(i,j)/real(ntimes1,mytype)
-            enddo
-          enddo
-        enddo
 
-        do k=1,zsize(3)
-          do j=1,zsize(2)
-            do i=1,zsize(1)
-              uusum(i,j) = uusum(i,j) + uprime(i,j,k)*uprime(i,j,k)/real(nz,mytype)
-              uvsum(i,j) = uvsum(i,j) + uprime(i,j,k)*vprime(i,j,k)/real(nz,mytype)
-              uwsum(i,j) = uwsum(i,j) + uprime(i,j,k)*wprime(i,j,k)/real(nz,mytype)
-              vvsum(i,j) = vvsum(i,j) + vprime(i,j,k)*vprime(i,j,k)/real(nz,mytype)
-              vwsum(i,j) = vwsum(i,j) + vprime(i,j,k)*wprime(i,j,k)/real(nz,mytype)
-              wwsum(i,j) = wwsum(i,j) + wprime(i,j,k)*wprime(i,j,k)/real(nz,mytype)
-            enddo
-          enddo
-        enddo
+        preprime = pre1 - presum/tacum
+        uprime = ux1 - u1sum/tacum
+        vprime = uy1 - u2sum/tacum
+        wprime = uz1 - u3sum/tacum
 
-        ntimes2 = ntimes2 + 1
+        !pressure
+        call fine_to_coarseS(1,preprime,tpsum)
+        prepsum=prepsum+tpsum
+
+        !u1=ux1
+        call fine_to_coarseS(1,uprime,tpsum)
+        u1psum=u1sum+tpsum
+
+        !u2=ux1*ux1
+        call fine_to_coarseS(1,uprime*uprime,tpsum)
+        u2psum=u2psum+tpsum
+
+        !u3=ux1*ux1*ux1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+        call fine_to_coarseS(1,uprime*uprime*uprime,tpsum)
+        u3psum=u3psum+tpsum
+
+        !u4=ux1*ux1*ux1*ux1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+        call fine_to_coarseS(1,uprime*uprime*uprime*uprime,tpsum)
+        u4psum=u4psum+tpsum
+
+        !v1=uy1
+        call fine_to_coarseS(1,vprime,tpsum)
+        v1psum=v1psum+tpsum
+
+        !v2=uy1*uy1
+        call fine_to_coarseS(1,vprime*vprime,tpsum)
+        v2psum=v2psum+tpsum
+
+        !v3sum=uy1*uy1*uy1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+        call fine_to_coarseS(1,vprime*vprime*vprime,tpsum)
+        v3psum=v3psum+tpsum
+
+        !v4sum=uy1*uy1*uy1*uy1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+        call fine_to_coarseS(1,vprime*vprime*vprime*vprime,tpsum)
+        v4psum=v4psum+tpsum
+
+        !w1=uz1
+        call fine_to_coarseS(1,wprime,tpsum)
+        w1psum=w1psum+tpsum
+
+        !w2=uz1*uz1
+        call fine_to_coarseS(1,wprime*wprime,tpsum)
+        w2psum=w2psum+tpsum
+
+        !w3=uz1*uz1*uz1 (THIRD ORDER MOMENTS - SKEWNESS/assimetria)
+        call fine_to_coarseS(1,wprime*wprime*wprime,tpsum)
+        w3psum=w3psum+tpsum
+
+        !w4=uz1*uz1*uz1*uz1 (FOURTH ORDER MOMENTS - FLATNESS/achatamento)
+        call fine_to_coarseS(1,wprime*wprime*wprime*wprime,tpsum)
+        w4psum=w4psum+tpsum
+
+        !uvsum=ux1*uy1
+        call fine_to_coarseS(1,uprime*vprime,tpsum)
+        uvpsum=uvpsum+tpsum
+
+        !uwsum=ux1*uz1
+        call fine_to_coarseS(1,uprime*wprime,tpsum)
+        uwpsum=uwpsum+tpsum
+
+        !vwsum=uy1*uz1
+        call fine_to_coarseS(1,vprime*wprime,tpsum)
+        vwpsum=vwpsum+tpsum
+
+     endif
+     
+     if (mod(itime,imodulo)==0) then
+
+        if (save_pre==1) call decomp_2d_write_one(1,presum,'stats/pre.sum',1)
+
+        if (save_ux==1) call decomp_2d_write_one(1,u1sum,'stats/u1.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u2sum,'stats/u2.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u3sum,'stats/u3.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u4sum,'stats/u4.sum',1)
+
+        if (save_uy==1) call decomp_2d_write_one(1,v1sum,'stats/v1.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v2sum,'stats/v2.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v3sum,'stats/v3.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v4sum,'stats/v4.sum',1)
+
+        if (save_uz==1) call decomp_2d_write_one(1,w1sum,'stats/w1.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w2sum,'stats/w2.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w3sum,'stats/w3.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w4sum,'stats/w4.sum',1)
+
+        call decomp_2d_write_one(1,half*(u2sum+v2sum+w2sum),'stats/k.sum',1)
+
+        call decomp_2d_write_one(1,uvsum,'stats/uv.sum',1)
+        call decomp_2d_write_one(1,uwsum,'stats/uw.sum',1)
+        call decomp_2d_write_one(1,vwsum,'stats/vw.sum',1)
+
+        !FLUCTUATIONS
+
+        if (save_pre==1) call decomp_2d_write_one(1,prepsum,'stats/prep.sum',1)
+
+        if (save_ux==1) call decomp_2d_write_one(1,u1psum,'stats/u1p.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u2psum,'stats/u2p.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u3psum,'stats/u3p.sum',1)
+        if (save_ux==1) call decomp_2d_write_one(1,u4psum,'stats/u4p.sum',1)
+
+        if (save_uy==1) call decomp_2d_write_one(1,v1psum,'stats/v1p.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v2psum,'stats/v2p.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v3psum,'stats/v3p.sum',1)
+        if (save_uy==1) call decomp_2d_write_one(1,v4psum,'stats/v4p.sum',1)
+
+        if (save_uz==1) call decomp_2d_write_one(1,w1psum,'stats/w1p.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w2psum,'stats/w2p.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w3psum,'stats/w3p.sum',1)
+        if (save_uz==1) call decomp_2d_write_one(1,w4psum,'stats/w4p.sum',1)
+
+        call decomp_2d_write_one(1,half*(u2psum+v2psum+w2psum),'stats/kp.sum',1)
+
+        call decomp_2d_write_one(1,uvpsum,'stats/uvp.sum',1)
+        call decomp_2d_write_one(1,uwpsum,'stats/uwp.sum',1)
+        call decomp_2d_write_one(1,vwpsum,'stats/vwp.sum',1)
+
+!        if (save_phi==1) then
+!          if (iscalar==1) then
+!            do is=1, nphi
+!              call decomp_2d_write_one(1, psum(:,:,:,is), 'stats/c'//char(48+is)//'.sum',1)
+!              call decomp_2d_write_one(1,ppsum(:,:,:,is),'stats/c'//char(48+is)//'c'//char(48+is)//'.sum',1)
+!              call decomp_2d_write_one(1,upsum(:,:,:,is),'stats/uc'//char(48+is)//'.sum',1)
+!              call decomp_2d_write_one(1,vpsum(:,:,:,is),'stats/vc'//char(48+is)//'.sum',1)
+!              call decomp_2d_write_one(1,wpsum(:,:,:,is),'stats/wc'//char(48+is)//'.sum',1)
+
+!              call decomp_2d_write_one(1, pppsum(:,:,:,is), 'stats/c'//char(48+is)//'p.sum',1)
+!              call decomp_2d_write_one(1,ppppsum(:,:,:,is),'stats/c'//char(48+is)//'pc'//char(48+is)//'.sum',1)
+!              call decomp_2d_write_one(1,uppsum(:,:,:,is),'stats/uc'//char(48+is)//p'.sum',1)
+!              call decomp_2d_write_one(1,vppsum(:,:,:,is),'stats/vc'//char(48+is)//p'.sum',1)
+!              call decomp_2d_write_one(1,wppsum(:,:,:,is),'stats/wc'//char(48+is)//p'.sum',1)
+
+!            enddo
+!          endif
+!        endif
       endif
 
-      if (mod(itime,imodulo).eq.0) then !write results
-        temp3(:,:,1) = usum/real(ntimes1,mytype)
-        write(filename,"('./data/usum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = vsum/real(ntimes1,mytype)
-        write(filename,"('./data/vsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = wsum/real(ntimes1,mytype)
-        write(filename,"('./data/wsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = uusum/real(ntimes2,mytype)
-        write(filename,"('./data/uusum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = uvsum/real(ntimes2,mytype)
-        write(filename,"('./data/uvsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = uwsum/real(ntimes2,mytype)
-        write(filename,"('./data/uwsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = vvsum/real(ntimes2,mytype)
-        write(filename,"('./data/vvsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = vwsum/real(ntimes2,mytype)
-        write(filename,"('./data/vwsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-        temp3(:,:,1) = wwsum/real(ntimes2,mytype)
-        write(filename,"('./data/wwsum',I4.4)") itime/imodulo
-        call decomp_2d_write_plane(3,temp3,3,1,filename)
-      endif
-    endif
-    return
-  end subroutine postprocessing
-  !############################################################################
-  subroutine write_probes(ux1,uy1,uz1,phi1) !By Felipe Schuch
+      return
 
-    real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)) :: ux1, uy1, uz1
-    real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3),nphi) :: phi1
+    end subroutine postprocessing
+    !############################################################################
+    subroutine write_probes(ux1,uy1,uz1,pre1,diss1,phi1) !By Felipe Schuch
 
-    integer :: i
-    character(len=30) :: filename
-    FS = 1+3+nphi !Number of columns
-    write(fileformat, '( "(",I4,"(E14.6),A)" )' ) FS
-    FS = FS*14+1  !Line width
+      real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)) :: ux1, uy1, uz1, pre1, diss1
+      real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3),nphi) :: phi1
 
-    do i=1, nprobes
-      if (rankprobes(i) .eq. 1) then
-        write(filename,"('./out/probe',I4.4)") i
-        open(67,file=trim(filename),status='unknown',form='formatted'&
-        ,access='direct',recl=FS)
-        write(67,fileformat,rec=itime) t,&                         !1
-        ux1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !2
-        uy1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !3
-        uz1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !4
-        phi1(nxprobes(i),nyprobes(i),nzprobes(i),:),&         !nphi
-        NL                                                    !+1
-        close(67)
-      endif
-    enddo
+      integer :: i
+      character(len=30) :: filename
+      FS = 1+3+nphi !Number of columns
+      write(fileformat, '( "(",I4,"(E14.6),A)" )' ) FS
+      FS = FS*14+1  !Line width
 
-  end subroutine write_probes
-  !############################################################################
-end module post_processing
+      do i=1, nprobes
+        if (rankprobes(i) .eq. 1) then
+          write(filename,"('./out/probe',I4.4)") i
+          open(67,file=trim(filename),status='unknown',form='formatted'&
+          ,access='direct',recl=FS)
+          write(67,fileformat,rec=itime) t,&                         !1
+          ux1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !2
+          uy1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !3
+          uz1(nxprobes(i),nyprobes(i),nzprobes(i)),&            !4
+          phi1(nxprobes(i),nyprobes(i),nzprobes(i),:),&         !nphi
+          NL                                                    !+1
+          close(67)
+        endif
+      enddo
+
+    end subroutine write_probes
+    !############################################################################
+  end module post_processing
 #endif
