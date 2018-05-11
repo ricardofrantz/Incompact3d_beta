@@ -1,8 +1,8 @@
 #
 # INCOMPACT 3D parameters - Wall jet
 #
-101    # nx
-121    # ny
+201    # nx
+251    # ny
 16     # nz
 1      # nphi
 2      # p_row
@@ -10,19 +10,19 @@
 #
 # INCOMPACT 3D Flow parameters
 #
-20.     # xlx     # Lx (Adimensional size in x-direction)
-5.      # yly      # Ly (Adimensional size in y-direction)
+40.     # xlx     # Lx (Adimensional size in x-direction)
+10.      # yly      # Ly (Adimensional size in y-direction)
 3.1416  # zlz       # Lz (Adimensional size in z-direction)
 10000.  # re      # Reynolds number
 1       # iscalar
 2       # cont_phi
 # Scalar 1
-0.3     # Richardson part number        [ri(1)]
+0.0     # Richardson part number        [ri(1)]
 1.      # Schmidt number                [nsc(1)]
 0.      # uset                          [uset(1)]
 1.      # cp                            [cp(1)]
 0.015   # noise1   # Intensity for inflow (0.01=1%,1=100%)
-0.0003  # dt        # Time step
+0.0005  # dt        # Time step
 2       # u1        # Outflow velocity
 1.      # u2        # U_b for the convective outflow
 #
@@ -55,10 +55,10 @@
 # INCOMPACT 3D File parameters
 #
 0      # ilit        # Read initial flow field? (0:no, 1:yes)
-20000 # isave       # Frequency for writing backup file (sauve.dat)
-2000   # imodulo     # Frequency for visualization for VISU_INSTA
-200    # iprocessing # Frequency for statistics computation
-20      # itest
+80000 # isave       # Frequency for writing backup file (sauve.dat)
+4000   # imodulo     # Frequency for visualization for VISU_INSTA
+400    # iprocessing # Frequency for statistics computation
+40      # itest
 500001 # initstats1
 550001 # initstats2
 #

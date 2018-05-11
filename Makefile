@@ -16,11 +16,11 @@
 # generate a Git version string
 GIT_VERSION := $(shell git describe --tag --long --always)
 
-FLOW_TYPE = walljet#ekman# TGV# Channel-flow# Cylinder
-OPTIONS = -DVISU -DVISUEXTRA -DSTRETCHING -DPOST -DVERSION=\"$(GIT_VERSION)\" #all above                 #TGV
+FLOW_TYPE = walljet#ekman# TGV# Channel-flow# Cylinder #walljet
+OPTIONS = -DVISU -DVISUEXTRA -DSTRETCHING -DPOST -DVERSION=\"$(GIT_VERSION)\" #all above #TGV
 
 LCL = local# local,lad,sdu,archer
-IVER = 17# 15,16,17,18
+IVER = 18# 15,16,17,18
 CMP = intel# intel,gcc
 FFT = mkl# mkl,generic,fftw3
 
@@ -28,6 +28,7 @@ FFT = mkl# mkl,generic,fftw3
 ifeq ($(CMP),intel)
 FC = mpiifort
 FFLAGS = -fpp -O3 -xHost -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
+#FFLAGS = -fpp -O3 -xSSE4.2 -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
 ##debuggin test: -check all -check bounds -chintel eck uninit -gen-interfaces -warn interfaces
 else ifeq ($(CMP),gcc)
 FC = mpif90
@@ -36,7 +37,7 @@ FFLAGS = -cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointe
 endif
 
 ### List of files for the main code
-SRC = decomp_2d.f90 glassman.f90 fft_$(FFT).f90 module_param.f90 io.f90 variables.f90 poisson.f90 schemes.f90 BC-$(FLOW_TYPE).f90 implicit.f90 convdiff.f90 navier.f90 derive.f90 parameters.f90 tools.f90 visu.f90 paraview.f90 genepsi3d.f90 filter.f90 les_models.f90 incompact3d.f90
+SRC = decomp_2d.f90 glassman.f90 fft_$(FFT).f90 module_param.f90 io.f90 variables.f90 poisson.f90 schemes.f90 implicit.f90 BC-$(FLOW_TYPE).f90 convdiff.f90 navier.f90 derive.f90 parameters.f90 tools.f90 visu.f90 paraview.f90 genepsi3d.f90 filter.f90 les_models.f90 incompact3d.f90
 
 ### List of files for the post-processing code
 PSRC = decomp_2d.f90 module_param.f90 io.f90 variables.f90 schemes.f90 derive.f90 BC-$(FLOW_TYPE).f90 parameters.f90 tools.f90 visu.f90 paraview.f90 post.f90
@@ -104,7 +105,7 @@ all: incompact3d
 #FreeIPC_c.o: FreeIPC_c.c
 #	$(CC) $(CFLAGS) -c $<
 
-incompact3d : $(OBJ)
+incompact3d: $(OBJ)
 	$(FC) -O3 -o $@ $(OBJ) $(LIBFFT)
 
 %.o : %.f90
