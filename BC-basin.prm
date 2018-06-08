@@ -2,36 +2,38 @@
 # INCOMPACT 3D parameters - Wall jet
 #
 201    # nx
-221    # ny
-16     # nz
+193    # ny
+201    # nz
 1      # nphi
 2      # p_row
 2      # p_col
 #
 # INCOMPACT 3D Flow parameters
 #
-40.     # xlx     # Lx (Adimensional size in x-direction)
-10.      # yly      # Ly (Adimensional size in y-direction)
-3.1416  # zlz       # Lz (Adimensional size in z-direction)
+5.     # xlx     # Lx (Adimensional size in x-direction)
+2.     # yly      # Ly (Adimensional size in y-direction)
+5.     # zlz       # Lz (Adimensional size in z-direction)
 10000.  # re      # Reynolds number
 1       # iscalar
 2       # cont_phi
 # Scalar 1
+0.0     # Richardson part number        [ri(1)]
+1.      # Schmidt number                [nsc(1)]
 0.      # Richardson part number        [ri(1)]
 1.      # Schmidt number                [nsc(1)]
 0.015   # noise1   # Intensity for inflow (0.01=1%,1=100%)
-0.0003  # dt        # Time step
+0.0005  # dt        # Time step
 2       # u1        # Outflow velocity
 1.      # u2        # U_b for the convective outflow
 #
 # INCOMPACT3D Flow configuration
 #
 1       # jLES       # LES Model (0:DNS, 1:iLES, 2:Explicit Smagorinsky, 3:Explicit WALE, 4: Explicit Dynamic Smagorinsky)
-1       # iin        # Initial condition (0: empty domain, 1: prescribed profile)
+0       # iin        # Initial condition (0: empty domain, 1: prescribed profile)
 1       # itype      # Inflow profile (0: glauert, 1: hyperbolic)
-2       # iturb      # Perturbation (0: no-perturbation, 1: white noise, 2: harmonic modes)
+1       # iturb      # Perturbation (0: no-perturbation, 1: white noise, 2: harmonic modes)
 1       # ifirst     # First iteration
-2000000 # ilast      # Last iteration
+200000 # ilast      # Last iteration
 4       # nscheme    # Temporal scheme (1:AB2, 2: RK3, 3:RK4, 4:AB3)
 0       # istret     # y-mesh refinement (0:no, 1:center, 2:both sides, 3:bottom)
 1.      # beta       # Refinement parameter
@@ -40,15 +42,15 @@
 2      #nclxn      #Boundary condition in x=Lx (0: Periodic, 1:Free-slip, 2: Dirichlet)
 2      #ncly1      #Boundary condition in y=0  (0: Periodic, 1:Free-slip, 2: Dirichlet)
 2      #nclyn      #Boundary condition in y=Ly (0: Periodic, 1:Free-slip, 2: Dirichlet)
-0      #nclz1      #Boundary condition in z=0  (0: Periodic, 1:Free-slip, 2: Dirichlet)
-0      #nclzn      #Boundary condition in z=Lz (0: Periodic, 1:Free-slip, 2: Dirichlet)
+2      #nclz1      #Boundary condition in z=0  (0: Periodic, 1:Free-slip, 2: Dirichlet)
+2      #nclzn      #Boundary condition in z=Lz (0: Periodic, 1:Free-slip, 2: Dirichlet)
 #scalar
 2      #nclxS1     #Boundary condition in x=0  (0: Periodic, 1:No-flux, 2: Dirichlet)
 2      #nclxSn     #Boundary condition in x=Lx (0: Periodic, 1:No-flux, 2: Dirichlet)
-1      #nclyS1     #Boundary condition in y=0  (0: Periodic, 1:No-flux, 2: Dirichlet)
-1      #nclySn     #Boundary condition in y=Ly (0: Periodic, 1:No-flux, 2: Dirichlet)
-0      #nclzS1     #Boundary condition in z=0  (0: Periodic, 1:No-flux, 2: Dirichlet)
-0      #nclzSn     #Boundary condition in z=Lz (0: Periodic, 1:No-flux, 2: Dirichlet)
+2      #nclyS1     #Boundary condition in y=0  (0: Periodic, 1:No-flux, 2: Dirichlet)
+2      #nclySn     #Boundary condition in y=Ly (0: Periodic, 1:No-flux, 2: Dirichlet)
+2      #nclzS1     #Boundary condition in z=0  (0: Periodic, 1:No-flux, 2: Dirichlet)
+2      #nclzSn     #Boundary condition in z=Lz (0: Periodic, 1:No-flux, 2: Dirichlet)
 #
 # INCOMPACT 3D File parameters
 #
@@ -56,6 +58,7 @@
 500000 # isave       # Frequency for writing backup file (sauve.dat)
 3333   # imodulo     # Frequency for visualization for VISU_INSTA
 666    # iprocessing # Frequency for statistics computation
+40      # itest
 500001 # initstats1
 550001 # initstats2
 #
@@ -67,8 +70,8 @@
 #
 0     # itrip      # Tripping KTH Style
 1.              # A_trip
-4.  /2.853      # xs_tr
-2.  /2.853      # ys_tr
-0.1 /2.853      # zs_tr
-4.  /2.853      # ts_tr
+4.    # xs_tr
+2.    # ys_tr
+0.1   # zs_tr
+4.    # ts_tr
 1.5             # x0_tr

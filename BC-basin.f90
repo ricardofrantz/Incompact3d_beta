@@ -1,6 +1,6 @@
 module flow_type
   use decomp_2d, only : mytype
-  integer :: initstats1,initstats2,iprocessing
+  integer :: initstats1,initstats2
 
 end module flow_type
 
@@ -17,7 +17,7 @@ subroutine ft_parameter(arg)
   integer :: is
   character :: a
 
-  open(10,file='BC-Wall_jet.prm',status='unknown',form='formatted')
+  open(10,file='BC-basin.prm',status='unknown',form='formatted')
   read (10,*) a !
   read (10,*) a ! INCOMPACT 3D computational parameters
   read (10,*) a !
@@ -44,6 +44,8 @@ subroutine ft_parameter(arg)
     read (10,*) a
     read (10,*) ri(is)
     read (10,*) nsc(is)
+    read (10,*) uset(is)
+    read (10,*) cp(is)
   enddo
   read (10,*) noise1
   read (10,*) dt
@@ -82,6 +84,7 @@ subroutine ft_parameter(arg)
   read (10,*) isave
   read (10,*) imodulo
   read (10,*) iprocessing
+  read (10,*) itest
   read (10,*) initstats1
   read (10,*) initstats2
   read (10,*) a !
@@ -566,12 +569,13 @@ contains
 
   end subroutine init_post
   !############################################################################
-  subroutine postprocessing(ux1,uy1,uz1,phi1,ep1) !By Felipe Schuch
+  subroutine postprocessing(ux1,uy1,uz1,phi1,ep1,pre1,diss1) !By Felipe Schuch
 
     USE decomp_2d_io
 
-    real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1, ep1
+    real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1, ep1, pre1
     real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3),nphi) :: phi1
+    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: diss1
     !
     real(mytype),dimension(ysize(1),ysize(2),ysize(3)) :: ux2, uy2, uz2
     real(mytype),dimension(zsize(1),zsize(2),zsize(3)) :: ux3, uy3, uz3, temp3
@@ -586,9 +590,9 @@ contains
     return
   end subroutine postprocessing
   !############################################################################
-  subroutine write_probes(ux1,uy1,uz1,phi1) !By Felipe Schuch
+    subroutine write_probes(ux1,uy1,uz1,pre1,diss1,phi1) !By Felipe Schuch
 
-    real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)) :: ux1, uy1, uz1
+      real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)) :: ux1, uy1, uz1, pre1, diss1
     real(mytype),intent(in),dimension(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3),nphi) :: phi1
 
     integer :: i

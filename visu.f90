@@ -222,6 +222,17 @@ subroutine VISU_INSTA (ux1,uy1,uz1,phi1,ep1,protection)
   !dv/dx=tb1 dv/dy=te1 and dv/dz=th1
   !dw/dx=tc1 dw/dy=tf1 and dw/dz=ti1
 
+  !if (save_ens.eq.1) then
+     di1=0._mytype
+     do ijk=1,nvect1
+        di1(ijk,1,1)=(tf1(ijk,1,1)-th1(ijk,1,1))**2+(tg1(ijk,1,1)-tc1(ijk,1,1))**2+(tb1(ijk,1,1)-td1(ijk,1,1))**2
+     enddo
+     uvisu=0._mytype
+     call fine_to_coarseV(1,di1,uvisu)
+     write(filename,"('./data/ens',I4.4)") itime/imodulo
+     call decomp_2d_write_one(1,uvisu,filename,2)
+  !endif
+
   if (save_w.eq.1) then
      di1=0._mytype
      do ijk=1,nvect1

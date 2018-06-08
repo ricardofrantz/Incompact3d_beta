@@ -16,7 +16,7 @@
 # generate a Git version string
 GIT_VERSION := $(shell git describe --tag --long --always)
 
-FLOW_TYPE = walljet#ekman# TGV# Channel-flow# Cylinder #walljet
+FLOW_TYPE = basin#ekman# TGV# Channel-flow# Cylinder #walljet
 OPTIONS = -DVISU -DVISUEXTRA -DSTRETCHING -DPOST -DVERSION=\"$(GIT_VERSION)\" #all above #TGV
 
 LCL = local# local,lad,sdu,archer
